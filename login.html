@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login to AutoLearning</title>
+    <link rel="stylesheet" href="login.css">
+</head>
+<body>
+    <div class="container">
+        <form class="regform" id="loginForm">
+            <h1><span>Login</span></h1>
+            
+            <div id="successMessage" class="success" style="display:none; color:green;"></div>
+            <div id="errorMessage" class="error" style="display:none; color:red;"></div>
+
+            <label for="emailid"><span>Email Address</span></label> <br>
+            <input type="email" id="emailid" name="emailid" required> <br><br>
+            <div id="emailError" class="error" style="display:none; color:red;">Please enter a valid email</div>
+
+            <label for="password"><span>Password</span></label> <br>
+            <input type="password" id="password" name="password" required> <br><br>
+            <div id="passwordError" class="error" style="display:none; color:red;">Please enter your password</div>
+
+            <button class="submit" type="submit"><span>Login</span></button> <br><br>
+            <h4><span>New to AutoLearning? Let's </span><a href="signup.html"><span>Sign Up</span></a></h4>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault(); // Prevent default form submission
+
+            const email = document.getElementById('emailid').value.trim();
+            const password = document.getElementById('password').value.trim();
+
+            // Reset error and success messages
+            document.querySelectorAll('.error').forEach(el => el.style.display = 'none');
+            document.getElementById('successMessage').style.display = 'none';
+
+            // Client-side validation
+            let isValid = true;
+            if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                document.getElementById('emailError').style.display = 'block';
+                isValid = false;
+            }
+            if (!password) {
+                document.getElementById('passwordError').style.display = 'block';
+                isValid = false;
+            }
+
+            if (!isValid) return;
+
+            // Send login data to server
+            try {
+                const response = await fetch('http://localhost:3000/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const result = await response.json();
+                if (response.ok) {
+                    document.getElementById('successMessage').textContent = 'Login successful!';
+                    document.getElementById('successMessage').style.display = 'block';
+                    
+                    window.location.href = 'main.html'; 
+                } else {
+                    document.getElementById('errorMessage').textContent = result.error || 'Login failed';
+                    document.getElementById('errorMessage').style.display = 'block';
+                }
+            } catch (error) {
+                document.getElementById('errorMessage').textContent = 'Error connecting to server';
+                document.getElementById('errorMessage').style.display = 'block';
+                console.error('Fetch error:', error);
+            }
+        });
+
+        const inputs = document.querySelectorAll('input');
+        inputs.forEach(input => {
+            input.addEventListener('blur', function() {
+                if (this.value.trim() === '') {
+                    this.style.borderColor = '#ff4444';
+                } else {
+                    this.style.borderColor = '#4CAF50';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

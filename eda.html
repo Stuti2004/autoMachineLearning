@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EDA - AutoLearning</title>
+    <link rel="stylesheet" href="main.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-matrix"></script>
+</head>
+<body>
+    <div class="title">
+        <h1>Exploratory Data Analysis</h1>
+    </div>
+    <div class="add">
+        <div class="card">
+            <p>Analyze your uploaded dataset</p>
+            <div id="edaResults">
+                <div id="shape" class="eda-section"></div>
+                <div id="info" class="eda-section"></div>
+                <div id="head" class="eda-section"></div>
+                <div id="nullValues" class="eda-section"></div>
+                <div id="heatmap" class="eda-section">
+                    <canvas id="heatmapChart"></canvas>
+                </div>
+                <div id="featureImportance" class="eda-section"></div>
+            </div>
+            <div class="feedback-message" id="errorMessage"></div>
+            <a href="main.html" class="button">Back to Upload</a>
+            <a href="login.html" class="button">Logout</a>
+            <button id="nextButton" class="button">Next</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const errorMessage = document.getElementById('errorMessage');
+            const filename = localStorage.getItem('uploadedFileName');
+            const columns = JSON.parse(localStorage.getItem('columns') || '[]');
+            const nextButton = document.getElementById('nextButton');
+
+            if (!filename) {
+                showError('No dataset uploaded. Please upload a file first.');
+                nextButton.disabled = true;
+                return;
+            }
+
+            try {
+                const response = await fetch(`http://localhost:3000/api/eda?filename=${encodeURIComponent(filename)}`);
+                const data = await response.json(); // Parse as JSON directly
+
+                if (!response.ok) {
+                    showError('Failed to fetch EDA results: ' + (data.error || 'Unknown error'));
+                    nextButton.disabled = true;
+                    return;
+                }
+
+                // Display dataset.shape
+                document.getElementById('shape').innerHTML = `
+                    <h3>Dataset Shape</h3>
+                    <table class="eda-table">
+                        <tr><th>Rows</th><td>${data.shape.rows || 0}</td></tr>
+                        <tr><th>Columns</th><td>${data.shape.cols || 0}</td></tr>
+                    </table>
+                `;
+
+                // Parse and display info
+                let infoHtml = '<h3>Dataset Info</h3><table class="eda-table"><tr><th>Column</th><th>Dtype</th><th>Non-Null Count</th><th>Null Count</th></tr>';
+                const infoLines = data.info.split('\n').slice(2); // Skip "Dataset Info:" and "Rows: ..." lines
+                infoLines.forEach(line => {
+                    const match = line.match(/(.+): (\w+) \(([\d]+) non-null\)/);
+                    if (match) {
+                        const [, column, dtype, nonNull] = match;
+                        const nullCount = data.shape.rows - parseInt(nonNull);
+                        infoHtml += `<tr><td>${column}</td><td>${dtype}</td><td>${nonNull}</td><td>${nullCount}</td></tr>`;
+                    }
+                });
+                if (infoLines.length <= 1) {
+                    infoHtml += `<tr><td colspan="4">No valid info data</td></tr>`;
+                }
+                infoHtml += '</table>';
+                document.getElementById('info').innerHTML = infoHtml;
+
+                // Parse and display head
+                let headHtml = '<h3>First 5 Rows</h3><table class="eda-table"><tr>';
+                columns.forEach(col => headHtml += `<th>${col}</th>`);
+                headHtml += '</tr>';
+                const headData = JSON.parse(data.head.replace('First 5 Rows:\n', ''));
+                headData.forEach(row => {
+                    headHtml += '<tr>';
+                    columns.forEach(col => headHtml += `<td>${row[col] || ''}</td>`);
+                    headHtml += '</tr>';
+                });
+                if (!headData.length) {
+                    headHtml += `<tr><td colspan="${columns.length}">No valid head data</td></tr>`;
+                }
+                headHtml += '</table>';
+                document.getElementById('head').innerHTML = headHtml;
+
+                // Parse and display null values
+                let nullHtml = '<h3>Missing Values</h3><table class="eda-table"><tr><th>Column</th><th>Null Count</th></tr>';
+                const nullLines = data.null_values.split('\n').slice(1); // Skip "Missing Values:" line
+                nullLines.forEach(line => {
+                    const [column, count] = line.split(': ').map(s => s.trim());
+                    if (column && count !== undefined) {
+                        nullHtml += `<tr><td>${column}</td><td>${count}</td></tr>`;
+                    }
+                });
+                if (nullLines.length <= 1) {
+                    nullHtml += `<tr><td colspan="2">No valid null values data</td></tr>`;
+                }
+                nullHtml += '</table>';
+                document.getElementById('nullValues').innerHTML = nullHtml;
+
+                // Display correlation heatmap
+                const ctx = document.getElementById('heatmapChart').getContext('2d');
+                const matrixData = data.correlation.map((val, i) => ({
+                    x: i % data.shape.cols,
+                    y: Math.floor(i / data.shape.cols),
+                    v: val
+                }));
+                new Chart(ctx, {
+                    type: 'matrix',
+                    data: {
+                        datasets: [{
+                            label: 'Correlation Heatmap',
+                            data: matrixData,
+                            backgroundColor(context) {
+                                const value = context.dataset.data[context.dataIndex].v;
+                                const alpha = Math.abs(value);
+                                return value >= 0 ? `rgba(0, 128, 255, ${alpha})` : `rgba(255, 0, 0, ${alpha})`;
+                            },
+                            borderColor: '#fff',
+                            borderWidth: 1,
+                            width: ({ chart }) => (chart.chartArea?.width || 100) / data.shape.cols - 1,
+                            height: ({ chart }) => (chart.chartArea?.height || 100) / data.shape.cols - 1
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            x: {
+                                title: { display: true, text: 'Columns' },
+                                ticks: {
+                                    callback: (value) => columns[value] || value,
+                                    maxTicksLimit: data.shape.cols
+                                }
+                            },
+                            y: {
+                                title: { display: true, text: 'Columns' },
+                                ticks: {
+                                    callback: (value) => columns[value] || value,
+                                    maxTicksLimit: data.shape.cols
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: (context) => {
+                                        const { x, y, v } = context.raw;
+                                        return `${columns[y] || y} vs ${columns[x] || x}: ${v.toFixed(2)}`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+
+                // Parse and display feature importance
+                let featureHtml = '<h3>Feature Importance</h3><table class="eda-table"><tr><th>Feature</th><th>Importance</th></tr>';
+                const featureLines = data.feature_importance.split('\n').slice(1); // Skip "Feature Importance:" line
+                featureLines.forEach(line => {
+                    const [feature, importance] = line.split(': ').map(s => s.trim());
+                    if (feature && importance) {
+                        featureHtml += `<tr><td>${feature}</td><td>${parseFloat(importance).toFixed(4)}</td></tr>`;
+                    }
+                });
+                if (featureLines.length <= 1) {
+                    featureHtml += `<tr><td colspan="2">No valid feature importance data</td></tr>`;
+                }
+                featureHtml += '</table>';
+                document.getElementById('featureImportance').innerHTML = featureHtml;
+
+                // Add event listener for Next button
+                nextButton.addEventListener('click', () => {
+                    localStorage.setItem('edaData', JSON.stringify(data));
+                    window.location.href = 'mlsetup.html';
+                });
+
+            } catch (error) {
+                showError('Error fetching EDA data: ' + error.message);
+                console.error('EDA error:', error);
+                nextButton.disabled = true;
+            }
+        });
+
+        function showError(message) {
+            const errorMessage = document.getElementById('errorMessage');
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+        }
+    </script>
+</body>
+</html>

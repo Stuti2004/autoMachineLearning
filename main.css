@@ -1,0 +1,250 @@
+body {
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    background: url('images/loginpage.svg') no-repeat center center fixed;
+    background-size: cover;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    /* Fallback background color if image fails */
+    background-color: #f0f2f5;
+}
+
+/* Title Section */
+.title {
+    background: rgba(255, 255, 255, 0.95); /* Semi-transparent white for readability over image */
+    padding: 15px 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    margin-bottom: 30px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 600px;
+    max-width: 90%;
+}
+
+.title h1 {
+    color: #2c2f54;
+    font-size: 48px;
+    font-weight: 700;
+    margin: 0;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
+    letter-spacing: 1px;
+}
+
+/* Button Styles */
+.button {
+    background: linear-gradient(135deg, #ffffff, #e6e8eb);
+    color: #2c2f54;
+    font-size: 18px;
+    padding: 12px 25px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    margin: 5px;
+}
+
+.button:hover {
+    background: linear-gradient(135deg, #e6e8eb, #d0d3d9);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+.add {
+    background-color: rgba(255, 255, 255, 1); 
+    border-radius: 15px;
+    padding: 25px;
+    width: 550px;
+    max-width: 90%;
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+    margin: 20px auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border: 2px solid #2c2f54;
+    transition: all 0.3s ease;
+}
+
+
+
+/* Card Content */
+.card {
+    width: 100%;
+    text-align: center;
+}
+
+.card p {
+    font-size: 24px;
+    color: #2c2f54;
+    font-weight: 600;
+    margin: 10px 0;
+}
+
+pre {
+    font-size: 14px;
+    font-style: italic;
+    color: #666;
+    background-color: rgba(249, 249, 249, 0.9);
+    padding: 8px 12px;
+    border-radius: 5px;
+    display: inline-block;
+}
+
+/* Feedback Messages */
+.error-message, .success-message {
+    margin: 15px 0;
+    padding: 10px 15px;
+    border-radius: 5px;
+    font-size: 16px;
+    max-width: 400px;
+}
+
+.error-message {
+    color: #d32f2f;
+    background-color: rgba(255, 235, 238, 0.9);
+    border: 1px solid #ef9a9a;
+}
+
+.success-message {
+    color: #2e7d32;
+    background-color: rgba(232, 245, 233, 0.9);
+    border: 1px solid #a5d6a7;
+}
+
+/* ML Form Styles */
+#mlForm h3 {
+    color: #2c2f54;
+    font-size: 18px;
+    font-weight: 600;
+    margin: 15px 0 5px;
+}
+
+#mlForm select {
+    padding: 10px;
+    font-size: 16px;
+    margin: 5px 0;
+    width: 250px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: rgba(255, 255, 255, 0.95);
+    transition: border-color 0.3s ease;
+}
+
+#mlForm select:focus {
+    border-color: #2c2f54;
+    outline: none;
+}
+
+#mlForm input[type="number"] {
+    padding: 10px;
+    font-size: 16px;
+    margin: 5px 10px;
+    width: 80px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: rgba(255, 255, 255, 0.95);
+    text-align: center;
+}
+
+#mlForm input[type="number"]:focus {
+    border-color: #2c2f54;
+    outline: none;
+}
+
+/* Columns Container */
+#columnsContainer ul {
+    list-style-type: none;
+    padding: 0;
+    text-align: left;
+    margin: 15px auto;
+    max-width: 450px;
+    background-color: rgba(249, 249, 249, 0.9);
+    border-radius: 5px;
+    padding: 10px;
+}
+
+#columnsContainer li {
+    padding: 8px;
+    color: #2c2f54;
+    font-size: 16px;
+    border-bottom: 1px solid #eee;
+}
+
+#columnsContainer li:last-child {
+    border-bottom: none;
+}
+
+/* Responsive Design */
+@media (max-width: 600px) {
+    .title {
+        width: 90%;
+        padding: 10px 20px;
+    }
+
+    .title h1 {
+        font-size: 36px;
+    }
+
+    .add {
+        width: 90%;
+        padding: 15px;
+    }
+
+    .button {
+        padding: 10px 15px;
+        font-size: 16px;
+    }
+
+    #mlForm select, #mlForm input[type="number"] {
+        width: 100%;
+        margin: 5px 0;
+    }
+
+    #columnsContainer ul {
+        max-width: 100%;
+    }
+}
+
+.eda-section {
+    margin-bottom: 20px;
+    overflow-x: auto;
+}
+
+
+.eda-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    table-layout: auto;
+}
+.eda-table th, .eda-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+.eda-table th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+}
+.eda-table tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+.eda-table tr:hover {
+    background-color: #f1f1f1;
+}
+#heatmapChart {
+    max-width: 600px;
+    margin: 0 auto;
+}
+.feedback-message {
+    margin-top: 10px;
+    font-size: 14px;
+    color: red;
+}

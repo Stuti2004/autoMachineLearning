@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MainPage - AutoLearning</title>
+    <link rel="stylesheet" href="main.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+    <div class="title">
+        <h1>Welcome to AutoLearning</h1>
+    </div>
+    <div class="add">
+        <div class="card">
+            <p>Upload your dataset here</p>
+            <pre>Supported formats: .csv, .xlsx, .xls</pre>
+            <br><br>
+            <form id="uploadForm" enctype="multipart/form-data" action="javascript:void(0)">
+                <input class="button" type="file" id="fileInput" name="dataset" accept=".csv,.xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" required>
+                <button type="submit" class="button">Upload</button>
+                <div class="feedback-message" id="loadingMessage" style="display: none;">Uploading and processing file...</div>
+                <div class="feedback-message" id="errorMessage"></div>
+                <div class="feedback-message" id="successMessage"></div>
+            </form>
+        </div>
+    </div>
+    <a href="login.html">Logout</a>
+
+    <script>
+        let isSubmitting = false;
+        const uploadForm = document.getElementById('uploadForm');
+        let uploadedFile = null;
+
+        uploadForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            if (isSubmitting) return;
+            isSubmitting = true;
+
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+            const errorMessage = document.getElementById('errorMessage');
+            const successMessage = document.getElementById('successMessage');
+            const loadingMessage = document.getElementById('loadingMessage');
+
+            errorMessage.style.display = 'none';
+            successMessage.style.display = 'none';
+            loadingMessage.style.display = 'block';
+
+            if (!file) {
+                errorMessage.textContent = 'Please select a file to upload.';
+                errorMessage.style.display = 'block';
+                loadingMessage.style.display = 'none';
+                isSubmitting = false;
+                return;
+            }
+
+            const validExtensions = ['.csv', '.xlsx', '.xls'];
+            const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
+            if (!validExtensions.includes(fileExtension)) {
+                errorMessage.textContent = 'Invalid file type. Please upload a CSV or Excel file.';
+                errorMessage.style.display = 'block';
+                loadingMessage.style.display = 'none';
+                isSubmitting = false;
+                return;
+            }
+
+            if (file.size > 5 * 1024 * 1024) {
+                errorMessage.textContent = 'File size too large. Maximum allowed is 5MB.';
+                errorMessage.style.display = 'block';
+                loadingMessage.style.display = 'none';
+                isSubmitting = false;
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('dataset', file);
+
+            try {
+                console.log('Sending fetch request to /api/upload');
+                const response = await fetch('http://localhost:3000/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                console.log('Fetch response received:', response.status, response.statusText);
+                const result = await response.json();
+                console.log('Response JSON:', result);
+
+                if (response.ok) {
+                    uploadedFile = file;
+                    successMessage.textContent = `File uploaded successfully: ${result.filename}`;
+                    successMessage.style.display = 'block';
+                    loadingMessage.style.display = 'none';
+                    localStorage.setItem('uploadedFileName', result.filename);
+
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        console.log('File reading completed');
+                        const data = event.target.result;
+                        let columns = [];
+                        if (fileExtension === '.csv') {
+                            columns = data.split('\n')[0].split(',').map(col => col.trim());
+                        } else {
+                            try {
+                                const workbook = XLSX.read(data, { type: 'binary' });
+                                const firstSheetName = workbook.SheetNames[0];
+                                const worksheet = workbook.Sheets[firstSheetName];
+                                columns = XLSX.utils.sheet_to_json(worksheet, { header: 1 })[0].map(col => col.toString().trim());
+                            } catch (error) {
+                                showError('Error reading Excel file: ' + error.message);
+                                loadingMessage.style.display = 'none';
+                                isSubmitting = false;
+                                return;
+                            }
+                        }
+                        localStorage.setItem('columns', JSON.stringify(columns));
+                        console.log('Columns stored:', columns);
+
+                        // Disable form elements
+                        fileInput.disabled = true;
+                        uploadForm.querySelector('button').disabled = true;
+                        uploadForm.querySelector('button').textContent = 'Uploaded';
+
+                        // Navigate to eda.html
+                        window.location.href = 'eda.html';
+                    };
+                    reader.onerror = function() {
+                        showError('Error reading file. Please try again.');
+                        loadingMessage.style.display = 'none';
+                        isSubmitting = false;
+                    };
+                    if (fileExtension === '.csv') {
+                        reader.readAsText(file);
+                    } else {
+                        reader.readAsBinaryString(file);
+                    }
+                } else {
+                    errorMessage.textContent = result.error || 'Upload failed';
+                    errorMessage.style.display = 'block';
+                    loadingMessage.style.display = 'none';
+                    isSubmitting = false;
+                }
+            } catch (error) {
+                errorMessage.textContent = 'Error connecting to server';
+                errorMessage.style.display = 'block';
+                loadingMessage.style.display = 'none';
+                console.error('Upload error:', error);
+                isSubmitting = false;
+            }
+        });
+
+        function showError(message) {
+            const errorMessage = document.getElementById('errorMessage');
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+        }
+    </script>
+</body>
+</html>

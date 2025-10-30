@@ -1,0 +1,160 @@
+* {
+    font-family:'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+}
+header {
+    background-color: #34296b;
+    padding: 10px;
+}
+header pre {
+    color: #f2f2f4;
+}
+/*.mainimg {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin-bottom: 20px;
+    padding: 0%;
+    
+}
+    */
+.mainvideo {
+    width: 100%;
+    height: auto;
+    border-radius: 12px;
+    object-fit: cover;
+}
+
+
+p {
+    font-size: 16px;
+    color: #333;
+    font-family: Arial, sans-serif;
+}
+pre {
+    text-align: center;
+    font-size: x-large;
+    color: #34296b;
+    padding: 10px;
+}
+h3 {
+    font-size: medium;
+    color: #34296b;
+}
+.features {
+    display: flex;
+    align-items: center; /* Align items vertically center */
+    justify-content: space-between; /* Add space between image and text */
+    padding: 20px;
+    gap: 40px; /* Space between image and text */
+    max-width: 1200px;
+    margin: auto;
+}
+
+.features .image-box img {
+    width: 800px; /* Adjust image size */
+    max-width: 100%;
+}
+
+.features .text-box {
+    display: flex;
+    flex-direction: column; /* Stack text vertically */
+    gap: 15px; /* Space between each feature */
+    font-size: 18px;
+    color: #34296b;
+}
+
+.features .text-box .column b {
+    font-size: 25px;
+    color: #1f1945;
+}
+
+.how-it-works {
+    text-align: center;
+    padding: 40px 20px;
+    background-color: #f2f2f4;
+}
+
+.how-it-works h2 {
+    font-size: 32px;
+    margin-bottom: 30px;
+    font-weight: bold;
+}
+
+.steps-container {
+    display: flex;
+    justify-content: center;
+    gap: 100px;
+    flex-wrap: wrap;
+    
+}
+
+.step-card {
+    background: #f2f2f4;
+    border-radius: 15px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    width: 250px;
+    padding: 20px;
+    text-align: center;
+    position: relative;
+    cursor: pointer;
+}
+
+.step-card:hover {
+    transform: translateY(-3px) scale(1.05);
+    
+}
+.step-card img {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 10px;
+    margin-bottom: 15px;
+}
+.step-number {
+    position: absolute;
+    top: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #34296b;
+    color: #fff;
+    width: 35px;
+    height: 35px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%;
+    font-weight: bold;
+    font-size: 18px;
+}
+
+.step-card h3 {
+    font-size: 18px;
+    margin-bottom: 10px;
+}
+
+.step-card p {
+    font-size: 14px;
+    color: #555;
+}
+
+.button1 {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 200px;
+}
+.button1 .start {
+    color: white;
+    background-color: #34296b;
+    padding: 10px;
+    font-size: x-large;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: 0.3s ease;
+    align-items: center;
+    
+}
+.button1 .start:hover {
+    color: white;
+    background-color: black;
+}

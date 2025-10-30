@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up to AutoLearning</title>
+    <link rel="stylesheet" href="login.css">
+</head>
+<body>
+    <div class="container">
+        <form class="regform" id="signupForm">
+            <h1><span>Sign Up</span></h1>
+            
+            <div id="successMessage" class="success" style="display:none; color:green;"></div>
+            <div id="errorMessage" class="error" style="display:none; color:red;"></div>
+
+            <label for="name"><span>Name</span></label> <br>
+            <input type="text" id="name" name="name" required> <br><br>
+            <div id="nameError" class="error" style="display:none; color:red;">Please enter your name</div>
+
+            <label for="emailid"><span>Email Address</span></label> <br>
+            <input type="email" id="emailid" name="emailid" required> <br><br>
+            <div id="emailError" class="error" style="display:none; color:red;">Please enter a valid email</div>
+
+            <label for="phone"><span>Mobile Number</span></label> <br>
+            <input type="tel" id="phone" name="phone" required> <br><br>
+            <div id="mobileError" class="error" style="display:none; color:red;">Please enter a 10-digit mobile number</div>
+
+            <label for="password"><span>Create a Strong Password</span></label> <br>
+            <input type="password" id="password" name="password" required> <br><br>
+            <div id="passwordError" class="error" style="display:none; color:red;">Please enter a valid password (min 8 characters, at least 1 letter and 1 number)
+            </div>
+
+            <button class="submit" type="submit"><span>Sign Up</span></button> <br><br>
+            <h4><span>Already have an AutoLearning Account? </span><a href="login.html"><span>Log In</span></a></h4>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('signupForm').addEventListener('submit', async function(e) {
+            e.preventDefault(); // Prevent default form submission
+
+            const name = document.getElementById('name').value.trim();
+            const email = document.getElementById('emailid').value.trim();
+            const mobile = document.getElementById('phone').value.trim();
+            const password = document.getElementById('password').value;
+
+            // Reset error and success messages
+            document.querySelectorAll('.error').forEach(el => el.style.display = 'none');
+            document.getElementById('successMessage').style.display = 'none';
+
+            // Client-side validation
+            let isValid = true;
+            if (!name) {
+                document.getElementById('nameError').style.display = 'block';
+                isValid = false;
+            }
+            if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                document.getElementById('emailError').style.display = 'block';
+                isValid = false;
+            }
+            if (!mobile || !/^[0-9]{10}$/.test(mobile)) {
+                document.getElementById('mobileError').style.display = 'block';
+                isValid = false;
+            }
+            if (!password || !/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/.test(password)) {
+            document.getElementById('passwordError').style.display = 'block';
+            isValid = false;
+            }
+
+            if (!isValid) return;
+
+            // Send data to server
+            try {
+                const response = await fetch('http://localhost:3000/api/signup', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ name, email, mobile, password })
+                });
+
+                const result = await response.json();
+                if (response.ok) {
+                    document.getElementById('successMessage').textContent = 'Sign-up successful!';
+                    document.getElementById('successMessage').style.display = 'block';
+                    document.getElementById('signupForm').reset(); 
+                    setTimeout(() => {
+                        window.location.href = 'login.html';
+                        }, 2000);
+                } else {
+                    document.getElementById('errorMessage').textContent = result.error || 'Sign-up failed';
+                    document.getElementById('errorMessage').style.display = 'block';
+                }
+            } catch (error) {
+                document.getElementById('errorMessage').textContent = 'Error connecting to server';
+                document.getElementById('errorMessage').style.display = 'block';
+                console.error('Fetch error:', error);
+            }
+        });
+    </script>
+</body>
+</html>

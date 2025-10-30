@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ML Setup - AutoLearning</title>
+    <link rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div class="title">
+        <h1>ML Model Setup</h1>
+    </div>
+    <div class="add">
+        <div class="card">
+            <p>Configure your ML model</p>
+            <form id="mlForm">
+                <h3>Select Target Column</h3>
+                <select id="targetColumn" name="targetColumn" required>
+                    <option value="">Select Target Column</option>
+                </select>
+                <br><br>
+                <h3>Features to Train Model</h3>
+                <div id="featuresToTrain">
+                    <!-- Dynamically populated -->
+                </div>
+                <br><br>
+                <h3>Normalize Selected Columns</h3>
+                <label><input type="radio" name="normalizeChoice" value="no" checked> No</label>
+                <label><input type="radio" name="normalizeChoice" value="yes"> Yes</label>
+                <div id="normalizeColumns" style="display: none;">
+                    <select id="normalizeSelect" name="normalizeSelect" multiple>
+                        <!-- Dynamically populated based on selected features -->
+                    </select>
+                </div>
+                <br><br>
+                <h3>Train-Test Split</h3>
+                <label>Train Size (%): <input type="number" id="trainSize" name="trainSize" min="10" max="90" value="70" required></label>
+                <label>Test Size (%): <span id="testSize">30</span></label>
+                <br><br>
+                <h3>Select Algorithm Type</h3>
+                <select id="algorithmType" name="algorithmType" required>
+                    <option value="">Select Algorithm Type</option>
+                    <option value="regression">Regression</option>
+                    <option value="classification">Classification</option>
+                </select>
+                <br><br>
+                <h3>Select ML Model</h3>
+                <select id="mlModel" name="mlModel" required>
+                    <option value="">Select Model</option>
+                    <!-- Dynamically populated -->
+                </select>
+                <br><br>
+                <button type="submit" class="button">Train Model</button>
+            </form>
+            <div class="feedback-message" id="errorMessage"></div>
+            <a href="eda.html" class="button">Back</a>
+            <a href="login.html" class="button">Logout</a>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const errorMessage = document.getElementById('errorMessage');
+            const targetColumn = document.getElementById('targetColumn');
+            const featuresToTrain = document.getElementById('featuresToTrain');
+            const normalizeYes = document.querySelector('input[name="normalizeChoice"][value="yes"]');
+            const normalizeNo = document.querySelector('input[name="normalizeChoice"][value="no"]');
+            const normalizeColumns = document.getElementById('normalizeColumns');
+            const normalizeSelect = document.getElementById('normalizeSelect');
+            const trainSize = document.getElementById('trainSize');
+            const testSize = document.getElementById('testSize');
+            const algorithmType = document.getElementById('algorithmType');
+            const mlModel = document.getElementById('mlModel');
+
+            const data = JSON.parse(localStorage.getItem('edaData'));
+            const columns = JSON.parse(localStorage.getItem('columns') || '[]');
+            const headData = JSON.parse(data.head.replace('First 5 Rows:\n', ''));
+
+            // Populate target column dropdown
+            columns.forEach(col => {
+                const option = document.createElement('option');
+                option.value = col;
+                option.textContent = col;
+                targetColumn.appendChild(option);
+            });
+
+            // Populate features to train checkboxes (exclude target column initially)
+            let availableColumns = [...columns];
+            targetColumn.addEventListener('change', () => {
+                const selectedTarget = targetColumn.value;
+                availableColumns = columns.filter(col => col !== selectedTarget);
+                featuresToTrain.innerHTML = '';
+                availableColumns.forEach(col => {
+                    const label = document.createElement('label');
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.name = 'trainFeature';
+                    checkbox.value = col;
+                    label.appendChild(checkbox);
+                    label.appendChild(document.createTextNode(` ${col}`));
+                    featuresToTrain.appendChild(label);
+                    featuresToTrain.appendChild(document.createElement('br'));
+                });
+                updateNormalizeOptions();
+                updateModelOptions(); // Update models when target changes
+            });
+
+            // Toggle normalize columns visibility and populate based on selected features
+            function updateNormalizeOptions() {
+                const selectedFeatures = Array.from(document.querySelectorAll('input[name="trainFeature"]:checked')).map(cb => cb.value);
+                normalizeSelect.innerHTML = '';
+                selectedFeatures.forEach(col => {
+                    const option = document.createElement('option');
+                    option.value = col;
+                    option.textContent = col;
+                    normalizeSelect.appendChild(option);
+                });
+                normalizeColumns.style.display = normalizeYes.checked && selectedFeatures.length > 0 ? 'block' : 'none';
+            }
+
+            normalizeYes.addEventListener('change', updateNormalizeOptions);
+            normalizeNo.addEventListener('change', () => {
+                normalizeColumns.style.display = 'none';
+            });
+            featuresToTrain.addEventListener('change', updateNormalizeOptions);
+
+            // Sync train and test sizes
+            trainSize.addEventListener('input', () => {
+                const train = parseInt(trainSize.value) || 0;
+                const test = 100 - train;
+                testSize.textContent = test >= 10 ? test : 10; // Ensure minimum 10% test size
+                trainSize.value = 100 - test < 10 ? 90 : train; // Adjust if test size would be less than 10%
+            });
+
+            // Update ML models based on selected algorithm type
+            function updateModelOptions() {
+                const selectedType = algorithmType.value;
+                mlModel.innerHTML = '<option value="">Select Model</option>';
+                if (selectedType) {
+                    const models = selectedType === 'classification'
+                        ? ['Logistic Regression', 'Random Forest', 'SVM']
+                        : ['Linear Regression', 'Random Forest', 'Gradient Boosting'];
+                    models.forEach(model => {
+                        const option = document.createElement('option');
+                        option.value = model.toLowerCase().replace(/ /g, '_');
+                        option.textContent = model;
+                        mlModel.appendChild(option);
+                    });
+                }
+            }
+
+            algorithmType.addEventListener('change', updateModelOptions);
+
+            // Handle form submission
+            document.getElementById('mlForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                const target = formData.get('targetColumn');
+                const trainFeatures = Array.from(formData.getAll('trainFeature'));
+                const normalizeChoice = formData.get('normalizeChoice');
+                const normalizeCols = normalizeChoice === 'yes' ? Array.from(formData.getAll('normalizeSelect')) : [];
+                const train = parseInt(formData.get('trainSize'));
+                const test = 100 - train;
+                const model = formData.get('mlModel');
+
+                if (!target || trainFeatures.length === 0 || !model) {
+                    showError('Please select a target column, at least one feature to train, and an ML model.');
+                    return;
+                }
+                if (normalizeChoice === 'yes' && normalizeCols.length === 0) {
+                    showError('Please select columns to normalize.');
+                    return;
+                }
+
+                // Store configuration and navigate to training page
+                localStorage.setItem('mlConfig', JSON.stringify({
+                    filename: localStorage.getItem('uploadedFileName'),
+                    targetColumn: target,
+                    trainFeatures,
+                    normalize: normalizeChoice === 'yes',
+                    normalizeColumns: normalizeCols,
+                    trainSize: train,
+                    testSize: test,
+                    mlModel: model
+                }));
+                window.location.href = 'mltrain.html'; // Placeholder for training page
+            });
+
+            function showError(message) {
+                const errorMessage = document.getElementById('errorMessage');
+                errorMessage.textContent = message;
+                errorMessage.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>

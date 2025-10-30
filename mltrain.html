@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ML Training - AutoLearning</title>
+    <link rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div class="title">
+        <h1>ML Model Training</h1>
+    </div>
+    <div class="add">
+        <div class="card">
+            <p>Train your ML model</p>
+            <div id="trainingResults">
+                <div id="normalizationStatus" class="eda-section"></div>
+                <div id="trainingStatus" class="eda-section"></div>
+                <div id="modelAccuracy" class="eda-section"></div>
+            </div>
+            <div class="feedback-message" id="errorMessage"></div>
+            <button id="trainButton" class="button">Start Training</button>
+            <a href="mlsetup.html" class="button">Back</a>
+            <a href="login.html" class="button">Logout</a>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const errorMessage = document.getElementById('errorMessage');
+            const normalizationStatus = document.getElementById('normalizationStatus');
+            const trainingStatus = document.getElementById('trainingStatus');
+            const modelAccuracy = document.getElementById('modelAccuracy');
+            const trainButton = document.getElementById('trainButton');
+
+            const mlConfig = JSON.parse(localStorage.getItem('mlConfig'));
+            if (!mlConfig) {
+                showError('No ML configuration found. Please set up the model first.');
+                trainButton.disabled = true;
+                return;
+            }
+
+            trainButton.addEventListener('click', async () => {
+                trainButton.disabled = true;
+                trainingStatus.innerHTML = '<h3>Training Status</h3><p>Initializing training process...</p>';
+
+                try {
+                    const response = await fetch('http://localhost:5000/api/train', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(mlConfig)
+                    });
+
+                    const result = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(result.error || 'Training failed');
+                    }
+
+                    // Update status
+                    if (mlConfig.normalize && mlConfig.normalizeColumns.length > 0) {
+                        normalizationStatus.innerHTML = `
+                            <h3>Normalization Status</h3>
+                            <p>Normalized columns: ${mlConfig.normalizeColumns.join(', ')}</p>
+                        `;
+                    } else {
+                        normalizationStatus.innerHTML = `
+                            <h3>Normalization Status</h3>
+                            <p>No normalization applied.</p>
+                        `;
+                    }
+
+                    trainingStatus.innerHTML = `
+                        <h3>Training Status</h3>
+                        <p>Training ${result.model} completed with ${mlConfig.trainSize}% train data and ${mlConfig.testSize}% test data.</p>
+                    `;
+
+                    modelAccuracy.innerHTML = `
+                        <h3>Model Accuracy</h3>
+                        <p>Accuracy on test set: ${result.accuracy.toFixed(2)}</p>
+                    `;
+
+                    // Store result
+                    localStorage.setItem('trainingResult', JSON.stringify(result));
+
+                } catch (error) {
+                    showError('Error during training: ' + error.message);
+                    console.error('Training error:', error);
+                } finally {
+                    trainButton.disabled = false;
+                }
+            });
+
+            function showError(message) {
+                errorMessage.textContent = message;
+                errorMessage.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>
